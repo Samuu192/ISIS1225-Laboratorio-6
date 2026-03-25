@@ -37,7 +37,7 @@ from DataStructures.List import array_list as al
 # TODO Realice la importación del mapa separate chaining
 from DataStructures.Map import map_separate_chaining as sp
 
-data_dir = os.path.dirname(os.path.realpath('__file__')) + '/Data/GoodReads/'
+data_dir = os.path.dirname(os.path.realpath(__file__)) + '/Data/GoodReads/'
 
 def new_logic():
     """
@@ -254,7 +254,11 @@ def add_book_tag(catalog, book_tag):
         book_tag_list = lp.get(catalog['book_tags'],t['tag_id'])
         al.add_last(book_tag_list,book_tag)
     else:
-        pass #TODO Completar escenario donde el book_tag no se había agregado al mapa   
+        new_list = al.new_list()
+        al.add_last(new_list, t)
+        lp.put(catalog['book_tags'], t['tag_id'], new_list) 
+    
+    #TODO Completar escenario donde el book_tag no se había agregado al mapa   
     return catalog
 
 #  -------------------------------------------------------------
@@ -265,8 +269,8 @@ def get_book_info_by_book_id(catalog, good_reads_book_id):
     """
     Retorna toda la informacion que se tenga almacenada de un libro según su good_reads_id.
     """
-    #TODO Completar función de consulta
-    pass
+    return lp.get(catalog['books_by_id'], good_reads_book_id)
+
 
 
 def get_books_by_author(catalog, author_name):
@@ -274,7 +278,7 @@ def get_books_by_author(catalog, author_name):
     Retorna los libros asociado al autor ingresado por párametro
     """
     #TODO Completar función de consulta
-    pass
+    return lp.get(catalog['books_by_authors'], author_name)
 
 
 def get_books_by_tag(catalog, tag_name):
@@ -288,7 +292,26 @@ def get_books_by_tag(catalog, tag_name):
 
     """
     #TODO Completar función de consulta
-    pass
+    tag = lp.get(catalog['tags'], tag_name)
+    if not tag:
+        return None
+
+    tag_id = tag['tag_id']
+    tagged_books = lp.get(catalog['book_tags'], tag_id)
+    if not tagged_books:
+        return None
+
+    result = al.new_list()
+
+    for i in range(al.size(tagged_books)):
+        book_tag = al.get_element(tagged_books, i)
+        book_id = book_tag['book_id']
+        book = lp.get(catalog['books_by_id'], book_id)
+
+        if book:
+            al.add_last(result, book)
+
+    return result
 
 
 def get_books_by_author_pub_year(catalog, author_name, pub_year):
@@ -305,8 +328,17 @@ def get_books_by_author_pub_year(catalog, author_name, pub_year):
     start_memory = getMemory()
     
     # TODO Completar la función de consulta
-    resultado = None  # Sustituir con la lógica real
     
+    if pub_year is None or pub_year== "":
+        pub_year = "Desconocido"
+    
+    author_map= lp.get(catalog["books_by_author"], author_name)
+    
+    if author_map:
+        resultado = lp.get(author_map,pub_year)
+    else:
+        resultado: None
+        
     # Detener medición de memoria
     stop_memory = getMemory()
     
