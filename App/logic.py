@@ -66,7 +66,7 @@ def new_logic():
     catalog['tags'] = lp.new_map(1000, 0.7) #TODO completar la creación del mapa
 
     #Tabla de Hash con la siguiente pareja llave valor: (tag_id -> book_tags)
-    catalog['book_tags'] = DataStructures.Map.map_linear_probing.new_map(1000,0.7)
+    catalog['book_tags'] = lp.new_map(1000,0.7)
 
     #Tabla de Hash principal que contiene sub-mapas dentro de los valores
     #con la siguiente representación de la pareja llave valor: (author_name -> (original_publication_year -> list(books)))
@@ -87,17 +87,14 @@ def load_data(catalog):
     start_time = getTime()
     
     books, authors = load_books(catalog)
-    tag_size = load_tags(catalog)
-    book_tag_size = load_books_tags(catalog)
+    tags = load_tags(catalog)
+    book_tags = load_books_tags(catalog)
     
-    stop_memory= getMemory()
-    end_time = getTime()
+    end_time= getTime()
     
-    delta_time = deltaTime(end_time, start_time)
-    delta_mem = deltaMemory(start_memory, stop_memory)
+    tiempo = deltaTime(end_time, start_time)
     
-    return books, authors,tag_size,book_tag_size, delta_time, delta_mem
-
+    return books, authors, tags, book_tags, tiempo
 
 def load_books(catalog):
     """
@@ -164,7 +161,7 @@ def add_book(catalog, book):
     # Se adiciona el libro a la lista general de libros
     al.add_last(catalog['books'], book)
     # Se adiciona el libro a la tabla de hash indexada por goodreads_book_id
-    DataStructures.Map.map_linear_probing.put(catalog['books_by_id'],book['goodreads_book_id'], book)
+    lp.put(catalog['books_by_id'],book['goodreads_book_id'], book)
     # Se obtienen los autores del libro
     authors = book['authors'].split(",")
     # Para cada autor, se agrega en la tabla de hash indexada por autores y 
@@ -181,7 +178,7 @@ def add_book_author(catalog, author_name, book):
     a los libros de dicho autor
     """
     authors = catalog['books_by_authors']
-    author_value = DataStructures.Map.map_linear_probing.get(authors,author_name)
+    author_value = lp.get(authors,author_name)
     if author_value:
         #Si el autor ya se había agregado al mapa, se obtiene la lista que contiene sus libros y se agrega el nuevo elemento.
         al.add_last(author_value,book)
@@ -190,7 +187,7 @@ def add_book_author(catalog, author_name, book):
         # y como valor una lista que contiene los libros asociados al autor.
         authors_books = al.new_list()
         al.add_last(authors_books,book)
-        DataStructures.Map.map_linear_probing.put(authors,author_name,authors_books)
+        lp.put(authors,author_name,authors_books)
     return catalog
 
 
@@ -217,23 +214,19 @@ def add_book_author_and_year(catalog, author_name, book):
     
     if author_value:
         pub_year_value = lp.get(author_value,pub_year)
+        
         if pub_year_value:
             al.add_last(pub_year_value,book)
         else:
             books = al.new_list()
             al.add_last(books, book)
-            pub_year_map = lp.new_map(1000,0.7)
-            lp.put(pub_year_map,pub_year,book)
+            lp.put(author_value,pub_year,book)
     else:
-    # TODO Completar escenario donde no se había agregado el autor al mapa principal
-    
-    books = al.new_list()
-    al.add_last(books, book)
-    
-    year_map = lp.new_map(100,0.7)
-    lp.put(year_map, pub_year, books)
-    
-    lp.put(books_by_year_author, author_name, year_map)
+        books = al.new_list()
+        al.add_last(books, book)
+        year_map = lp.new_map(100,0.7)
+        lp.put(year_map, pub_year, books)
+        lp.put(books_by_year_author, author_name, year_map)
     
     return catalog
 
@@ -243,7 +236,7 @@ def add_tag(catalog, tag):
     Adiciona un tag al mapa de tags indexado por nombre del tag
     """
     t = new_tag(tag['tag_name'], tag['tag_id'])
-    DataStructures.Map.map_linear_probing.put(catalog['tags'],tag['tag_name'],t)
+    lp.put(catalog['tags'],tag['tag_name'],t)
     return catalog
 
 
@@ -256,9 +249,9 @@ def add_book_tag(catalog, book_tag):
         - Se crea el nuevo indice en el mapa y como valor se agrega una nueva lista con el book_tag asociado.
     """
     t = new_book_tag(book_tag['tag_id'], book_tag['goodreads_book_id'], book_tag['count'])
-    book_tag_value = DataStructures.Map.map_linear_probing.contains(catalog['book_tags'],t['tag_id'])
+    book_tag_value = lp.contains(catalog['book_tags'],t['tag_id'])
     if book_tag_value:
-        book_tag_list = DataStructures.Map.map_linear_probing.get(catalog['book_tags'],t['tag_id'])
+        book_tag_list = lp.get(catalog['book_tags'],t['tag_id'])
         al.add_last(book_tag_list,book_tag)
     else:
         pass #TODO Completar escenario donde el book_tag no se había agregado al mapa   
@@ -330,19 +323,19 @@ def get_books_by_author_pub_year(catalog, author_name, pub_year):
 #  -------------------------------------------------------------
 
 def book_size(catalog):
-    return DataStructures.Map.map_linear_probing.size(catalog['books_by_id'])
+    return lp.size(catalog['books_by_id'])
 
 
 def author_size(catalog):
-    return DataStructures.Map.map_linear_probing.size(catalog['books_by_authors'])
+    return lp.size(catalog['books_by_authors'])
 
 
 def tag_size(catalog):
-    return DataStructures.Map.map_linear_probing.size(catalog['tags'])
+    return lp.size(catalog['tags'])
 
 
 def book_tag_size(catalog):
-    return DataStructures.Map.map_linear_probing.size(catalog['book_tags'])
+    return lp.size(catalog['book_tags'])
 
 #  -------------------------------------------------------------
 # Funciones utilizadas para obtener memoria y tiempo
