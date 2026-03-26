@@ -223,24 +223,16 @@ def add_tag(catalog, tag):
 
 
 def add_book_tag(catalog, book_tag):
-    """
-    Adiciona un tag a la lista de tags.
-    Si el book_tag ya había sido agregado:
-        - Se obtiene la lista asociada al valor del indice y se agrega el book_yag
-    Si el book_tag no había sido agregado:
-        - Se crea el nuevo indice en el mapa y como valor se agrega una nueva lista con el book_tag asociado.
-    """
     t = new_book_tag(book_tag['tag_id'], book_tag['goodreads_book_id'], book_tag['count'])
-    book_tag_value = lp.contains(catalog['book_tags'],t['tag_id'])
-    if book_tag_value:
-        book_tag_list = lp.get(catalog['book_tags'],t['tag_id'])
-        al.add_last(book_tag_list,book_tag)
+
+    if lp.contains(catalog['book_tags'], t['tag_id']):
+        book_tag_list = lp.get(catalog['book_tags'], t['tag_id'])
+        al.add_last(book_tag_list, t)
     else:
         new_list = al.new_list()
         al.add_last(new_list, t)
-        lp.put(catalog['book_tags'], t['tag_id'], new_list) 
-    
-    #TODO Completar escenario donde el book_tag no se había agregado al mapa   
+        lp.put(catalog['book_tags'], t['tag_id'], new_list)
+
     return catalog
 
 #  -------------------------------------------------------------
@@ -264,16 +256,6 @@ def get_books_by_author(catalog, author_name):
 
 
 def get_books_by_tag(catalog, tag_name):
-    """
-    Retorna el número de libros que fueron etiquetados con el tag_name especificado.
-    - Se obtiene el tag asociado al tag_name dado.
-    - Teniendo la información del tag, se obtiene el tag_id para relacionarlo con la estructura que contiene el 
-    set de datos de book_tags y obtener más información.
-    - Teniendo el tag_id, se puede obtener el goodreads_book_id de la estructura que contiene los datos 
-    de book_tags y finalmente relacionarlo con los datos completos del libro.
-
-    """
-    #TODO Completar función de consulta
     tag = lp.get(catalog['tags'], tag_name)
     if not tag:
         return None
@@ -297,38 +279,28 @@ def get_books_by_tag(catalog, tag_name):
 
 
 def get_books_by_author_pub_year(catalog, author_name, pub_year):
-    """
-    - Se obtiene el mapa asociado al author_name dado
-    - Si el author existe, se obtiene el mapa asociado al año de publicación
-    Retorna los libros asociados a un autor y un año de publicación específicos
-    """
-    # Iniciar medición de tiempo
     start_time = getTime()
-    
-    # Iniciar medición de memoria
+
     tracemalloc.start()
     start_memory = getMemory()
-    
-    # TODO Completar la función de consulta
-    
-    if pub_year is None or pub_year== "":
-        pub_year = "Desconocido"
-    
-    author_map= lp.get(catalog["books_by_author"], author_name)
-    
+
+    if pub_year == "" or pub_year is None:
+        pub_year = "No encontrado"
+
+    author_map = lp.get(catalog['books_by_year_author'], author_name)
+
     if author_map:
-        resultado = lp.get(author_map,pub_year)
+        resultado = lp.get(author_map, pub_year)
     else:
-        resultado: None
-        
-    # Detener medición de memoria
+        resultado = None
+
     stop_memory = getMemory()
-    
-    # Calcular medición de tiempo y memoria
+    tracemalloc.stop()
+
     end_time = getTime()
     tiempo_transcurrido = deltaTime(end_time, start_time)
     memoria_usada = deltaMemory(start_memory, stop_memory)
-    
+
     return resultado, tiempo_transcurrido, memoria_usada
 
 
