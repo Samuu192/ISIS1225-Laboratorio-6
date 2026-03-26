@@ -37,7 +37,7 @@ from DataStructures.List import array_list as al
 # TODO Realice la importación del mapa separate chaining
 from DataStructures.Map import map_separate_chaining as sp
 
-data_dir = os.path.dirname(os.path.realpath(__file__)) + '/Data/GoodReads/'
+data_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '/Data/GoodReads/'
 
 def new_logic():
     """
@@ -84,17 +84,10 @@ def load_data(catalog):
     Carga los datos de los archivos y cargar los datos en la
     estructura de datos
     """
-    start_time = getTime()
-    
     books, authors = load_books(catalog)
-    tags = load_tags(catalog)
-    book_tags = load_books_tags(catalog)
-    
-    end_time= getTime()
-    
-    tiempo = deltaTime(end_time, start_time)
-    
-    return books, authors, tags, book_tags, tiempo
+    tag_size = load_tags(catalog)
+    book_tag_size = load_books_tags(catalog)
+    return books, authors, tag_size, book_tag_size
 
 def load_books(catalog):
     """
@@ -192,42 +185,31 @@ def add_book_author(catalog, author_name, book):
 
 
 def add_book_author_and_year(catalog, author_name, book):
-    """
-    Adiciona un autor a los mapas indexados por autor y por año de publicación.
-    Si el autor ya se había agregado: 
-        - Si el año de publicación también se había agregado, se obtiene la lista en el tercer nivel y se agrega el libro.
-        - Si el año de publicación no se había agregado, se agrega un nuevo mapa dentro del indice del autor y dentro de 
-        este mapa se agrega una lista con el libro asociado.
-    Si el autor no se había agregado:
-        - Se crea el indice del nuevo autor, se crea dentro del valor el mapa asociado al nuevo año de publicación y 
-        en el tercer nivel se agrega una lista como valor de este ultimo mapa con el libro asociado
-    """
     books_by_year_author = catalog['books_by_year_author']
     pub_year = book['original_publication_year']
-    #Si el año de publicación está vacío se reemplaza por un valor simbolico
-    #TODO Completar manejo de los escenarios donde el año de publicación es vacío.
-    
+
     if pub_year == "" or pub_year is None:
         pub_year = "No encontrado"
-    
-    author_value = lp.get(books_by_year_author,author_name)
-    
+
+    author_value = lp.get(books_by_year_author, author_name)
+
     if author_value:
-        pub_year_value = lp.get(author_value,pub_year)
-        
+        pub_year_value = lp.get(author_value, pub_year)
+
         if pub_year_value:
-            al.add_last(pub_year_value,book)
+            al.add_last(pub_year_value, book)
         else:
             books = al.new_list()
             al.add_last(books, book)
-            lp.put(author_value,pub_year,book)
+            lp.put(author_value, pub_year, books)
     else:
         books = al.new_list()
         al.add_last(books, book)
-        year_map = lp.new_map(100,0.7)
+
+        year_map = lp.new_map(100, 0.7)
         lp.put(year_map, pub_year, books)
         lp.put(books_by_year_author, author_name, year_map)
-    
+
     return catalog
 
 

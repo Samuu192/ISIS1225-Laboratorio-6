@@ -155,8 +155,7 @@ def main():
             print('Libros cargados: ' + str(bk))
             print('Autores cargados: ' + str(at))
             print('Géneros cargados: ' + str(tg))
-            print('Asociación de Géneros a Libros cargados: ' +
-                  str(bktg))
+            print('Asociación de Géneros a Libros cargados: ' + str(bktg))
 
         elif int(inputs[0]) == 2:
             number = input("Ingrese el id del libro (good_read_book_id) que desea buscar: ")
